@@ -1,0 +1,640 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Performance — Caio Sorriso</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--blue:#0099FF;--yellow:#FFB400;--green:#00C896;--red:#FF4D4D;
+--bg:#050C18;--card:#0A1628;--card-border:#12203A;
+--text:#E8EDF5;--text-dim:#7A8BA8;--text-muted:#3D506B;
+--blue-glow:rgba(0,153,255,.15);--yellow-glow:rgba(255,180,0,.12);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+h1,h2,h3,.stat-val{font-family:'Bebas Neue',sans-serif;letter-spacing:.04em}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--blue);border-radius:2px}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(5,12,24,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--card-border);padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-inner{display:flex;gap:4px;min-width:max-content;padding:8px 0}
+.nav a{color:var(--text-dim);text-decoration:none;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px;border-radius:6px;white-space:nowrap;transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--blue);background:var(--blue-glow)}
+
+/* LAYOUT */
+.container{max-width:720px;margin:0 auto;padding:0 16px}
+section{padding:48px 0 24px;opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+section.visible{opacity:1;transform:translateY(0)}
+
+/* HEADER */
+.hero{padding:64px 0 40px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-60%;left:-20%;width:140%;height:200%;background:radial-gradient(ellipse at 50% 0%,rgba(0,153,255,.08) 0%,transparent 60%);pointer-events:none}
+.hero-badge{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--yellow);background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.2);padding:6px 16px;border-radius:100px;margin-bottom:20px}
+.hero h1{font-size:clamp(32px,8vw,56px);line-height:.95;color:#fff;margin-bottom:8px}
+.hero h1 span{color:var(--blue)}
+.hero-sub{font-size:14px;color:var(--text-dim);font-weight:500}
+.hero-period{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text-dim);letter-spacing:.12em;margin-top:16px}
+
+/* SECTION TITLES */
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--blue);margin-bottom:8px}
+.section-title{font-size:clamp(24px,6vw,36px);line-height:1.1;color:#fff;margin-bottom:16px}
+.section-desc{font-size:14px;color:var(--text-dim);line-height:1.7;margin-bottom:24px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:20px;margin-bottom:12px;transition:border-color .3s}
+.card:hover{border-color:rgba(0,153,255,.3)}
+.card-glow{box-shadow:0 0 40px rgba(0,153,255,.06)}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:16px;text-align:center}
+.stat-val{font-size:clamp(24px,6vw,32px);color:#fff;line-height:1}
+.stat-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.stat-card.highlight{border-color:var(--blue);background:linear-gradient(135deg,rgba(0,153,255,.08),var(--card))}
+.stat-card.highlight .stat-val{color:var(--blue)}
+
+/* BIG NUMBER */
+.big-number{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,14vw,80px);line-height:1;background:linear-gradient(135deg,var(--blue),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* EXECUTIVE SUMMARY */
+.exec-summary{font-size:15px;line-height:1.8;color:var(--text);border-left:3px solid var(--blue);padding-left:20px}
+.exec-summary strong{color:var(--yellow)}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;width:100%;margin:16px 0}
+.chart-wrap canvas{width:100%!important}
+
+/* COMPARISON */
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.compare-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:16px;text-align:center}
+.compare-card h4{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--text-dim);margin-bottom:8px;letter-spacing:.06em}
+.compare-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,5vw,28px);color:#fff}
+.compare-sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+.compare-card.blue{border-color:rgba(0,153,255,.3);background:linear-gradient(180deg,rgba(0,153,255,.06),var(--card))}
+.compare-card.green{border-color:rgba(0,200,150,.3);background:linear-gradient(180deg,rgba(0,200,150,.06),var(--card))}
+
+/* TOP VIDEOS */
+.video-card{display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--card);border:1px solid var(--card-border);border-radius:10px;margin-bottom:8px}
+.video-rank{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text-muted);min-width:28px;text-align:center;line-height:1}
+.video-rank.gold{color:var(--yellow)}
+.video-rank.silver{color:var(--text-dim)}
+.video-rank.bronze{color:#CD7F32}
+.video-info{flex:1;min-width:0}
+.video-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.video-meta{display:flex;gap:12px;flex-wrap:wrap}
+.video-meta span{font-size:11px;color:var(--text-dim)}
+.video-meta .views{color:var(--blue);font-weight:700}
+.video-meta .likes{color:var(--yellow)}
+.video-meta .date{color:var(--text-muted)}
+
+/* INSIGHT BOX */
+.insight{background:linear-gradient(135deg,rgba(255,180,0,.08),rgba(255,180,0,.02));border:1px solid rgba(255,180,0,.2);border-radius:10px;padding:16px;margin:16px 0;font-size:13px;color:var(--text);line-height:1.7}
+.insight-title{font-weight:700;color:var(--yellow);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+
+/* PROBLEM / SUGGESTION CARDS */
+.issue-card{display:flex;gap:12px;padding:14px;background:var(--card);border:1px solid var(--card-border);border-radius:10px;margin-bottom:8px;align-items:flex-start}
+.issue-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.issue-icon.red{background:rgba(255,77,77,.12);color:var(--red)}
+.issue-icon.green{background:rgba(0,200,150,.12);color:var(--green)}
+.issue-text h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.issue-text p{font-size:12px;color:var(--text-dim);line-height:1.5}
+
+/* COLLAPSIBLE */
+.collapsible{cursor:pointer;user-select:none}
+.collapsible::after{content:'+';float:right;font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--blue);transition:transform .3s}
+.collapsible.open::after{content:'-'}
+.collapse-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.collapse-body.open{max-height:3000px}
+
+/* HOURS CHART */
+.hour-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hour-label{font-size:12px;color:var(--text-dim);min-width:28px;text-align:right;font-weight:600}
+.hour-bar-track{flex:1;height:24px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden;position:relative}
+.hour-bar-fill{height:100%;border-radius:4px;transition:width 1s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.hour-bar-val{font-size:10px;font-weight:700;color:#fff}
+
+/* DIVIDER */
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--card-border),transparent);margin:32px 0}
+
+/* PLATFORM BADGE */
+.platform-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:6px;margin-bottom:12px}
+.platform-badge.yt{background:rgba(255,0,0,.12);color:#FF4444}
+.platform-badge.ig{background:linear-gradient(135deg,rgba(225,48,108,.12),rgba(131,58,180,.12));color:#E1306C}
+
+/* FOOTER */
+.footer{text-align:center;padding:40px 16px;border-top:1px solid var(--card-border);margin-top:32px}
+.footer p{font-size:11px;color:var(--text-muted);line-height:1.8}
+
+/* PROGRESS BAR */
+.progress-row{margin-bottom:12px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.progress-label span:first-child{color:var(--text);font-weight:600}
+.progress-label span:last-child{color:var(--text-dim)}
+.progress-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width 1.2s ease}
+
+/* RESPONSIVE */
+@media(max-width:400px){
+.stat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+.stat-card{padding:12px}
+.compare-row{grid-template-columns:1fr 1fr;gap:8px}
+.video-card{padding:12px;gap:10px}
+}
+@media(min-width:600px){
+.stat-grid.three{grid-template-columns:repeat(3,1fr)}
+}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;color:var(--text-dim);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:8px 6px;border-bottom:1px solid var(--card-border)}
+.tbl td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th.n{text-align:right}
+.tbl-wrap{overflow-x:auto}
+.read{font-size:12px;color:var(--text-dim);line-height:1.6;margin-top:8px}
+.read b{color:var(--text)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em}
+.tag.up{background:rgba(0,200,150,.12);color:var(--green)}
+.tag.down{background:rgba(255,77,77,.12);color:var(--red)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+<div class="nav-inner">
+<a href="#resumo">Resumo</a>
+<a href="#numeros">Números</a>
+<a href="#diario">Dia a dia</a>
+<a href="#formatos">Formatos</a>
+<a href="#descoberta">Descoberta</a>
+<a href="#top-videos">Top Vídeos</a>
+<a href="#retencao">Retenção</a>
+<a href="#temas">Temas</a>
+<a href="#publico">Público</a>
+<a href="#outliers">Outliers</a>
+<a href="#padroes">Padrões</a>
+<a href="#acoes">Ações</a>
+</div>
+</nav>
+
+<div class="container">
+
+<header class="hero" id="resumo">
+<div class="hero-badge">Relatório YouTube</div>
+<h1>Performance <span>YouTube</span></h1>
+<h1 style="font-size:clamp(24px,6vw,40px);color:var(--yellow)">Caio Sorriso</h1>
+<p class="hero-sub">Os Donos da Bola / RedeTV! — canal oficial</p>
+<p class="hero-period">21 ago a 17 set 2026 (28 dias) + visão de 90 dias</p>
+</header>
+
+<section>
+<div class="section-label">Visão Geral</div>
+<div class="section-title">Resumo Executivo</div>
+<div class="exec-summary">
+Em 28 dias o canal fez <strong>68.833 visualizações</strong> (35,8 mil acima do habitual), <strong>289,9 horas</strong> de exibição e <strong>+72 inscritos</strong> (157% a mais que nos 28 dias anteriores). Em 90 dias foram <strong>208,6 mil views</strong> (+63%). O crescimento é real, mas tem uma natureza específica: <strong>98,2% das views vêm de Shorts</strong>, <strong>95,4% chegam pelo feed de Shorts</strong> e <strong>95,2% do público é novo</strong>. Hoje o canal funciona como máquina de alcance, não como audiência: cada publicação rende perto de <strong>1.000 views</strong>, e nos dias sem postagem o canal cai para <strong>450 views/dia</strong>. Quem manda no resultado é o volume de publicação, não o vídeo individual.
+</div>
+<div style="margin-top:24px">
+<div class="stat-grid">
+<div class="stat-card highlight"><div class="stat-val">68.833</div><div class="stat-label">Views 28 dias</div></div>
+<div class="stat-card"><div class="stat-val">+72</div><div class="stat-label">Inscritos 28 dias</div></div>
+<div class="stat-card"><div class="stat-val">24,1 mil</div><div class="stat-label">Público mensal</div></div>
+<div class="stat-card"><div class="stat-val">2.139</div><div class="stat-label">Inscritos totais</div></div>
+</div>
+</div>
+<div class="insight">
+<div class="insight-title">Leitura em uma frase</div>
+O canal aprendeu a ser distribuído pelo algoritmo, mas ainda não aprendeu a reter: menos de 0,1% são espectadores recorrentes e 96% de quem volta assiste só Shorts.
+</div>
+</section>
+
+<div class="divider"></div>
+
+<section id="numeros">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Todos os Números do Período</div>
+<div class="section-desc">Painel completo do Studio. As comparações são as que o próprio YouTube informa.</div>
+
+<div class="compare-row">
+<div class="compare-card blue"><h4>Últimos 28 dias</h4><div class="compare-val">68,8 mil</div><div class="compare-sub">views · 289,9 h · +72 inscritos</div></div>
+<div class="compare-card green"><h4>Últimos 90 dias</h4><div class="compare-val">208,6 mil</div><div class="compare-sub">views · 717,8 h · +111 inscritos</div></div>
+</div>
+
+<div class="card tbl-wrap">
+<table class="tbl">
+<tr><th>Métrica</th><th class="n">Valor</th><th class="n">Variação</th></tr>
+<tr><td>Visualizações (28d)</td><td class="n">68.833</td><td class="n"><span class="tag up">+35,8 mil vs habitual</span></td></tr>
+<tr><td>Tempo de exibição (28d)</td><td class="n">289,9 h</td><td class="n"><span class="tag up">+129,9 h vs habitual</span></td></tr>
+<tr><td>Inscritos (28d)</td><td class="n">+72</td><td class="n"><span class="tag up">+157%</span></td></tr>
+<tr><td>Visualizações (90d)</td><td class="n">208.624</td><td class="n"><span class="tag up">+63%</span></td></tr>
+<tr><td>Tempo de exibição (90d)</td><td class="n">717,8 h</td><td class="n"><span class="tag up">+27%</span></td></tr>
+<tr><td>Inscritos (90d)</td><td class="n">+111</td><td class="n"><span class="tag up">+113%</span></td></tr>
+<tr><td>Impressões de miniatura (28d)</td><td class="n">36.331</td><td class="n">—</td></tr>
+<tr><td>CTR da miniatura (28d)</td><td class="n">1,83%</td><td class="n">—</td></tr>
+<tr><td>Público mensal (espectadores únicos)</td><td class="n">24,1 mil</td><td class="n">—</td></tr>
+<tr><td>Inscritos totais (tempo real, 18/set)</td><td class="n">2.139</td><td class="n">—</td></tr>
+<tr><td>Views nas últimas 48h (18/set)</td><td class="n">2.085</td><td class="n">—</td></tr>
+<tr><td>Inscritos com "todas as notificações"</td><td class="n">2,9% (63)</td><td class="n"><span class="tag down">média YT 5–20%</span></td></tr>
+</table>
+</div>
+<p class="read"><b>Leitura:</b> a conversão para inscrito é de <b>1 a cada 956 views</b> (1,05 por mil). O Studio avisa que mudou a forma de contar visualizações, o que infla os números recentes; por isso horas de exibição (+27% em 90 dias) é um termômetro mais honesto do crescimento do que views (+63%). Comparado ao relatório anterior: junho teve 82.595 views no mês; os últimos 28 dias ficaram em 68.833, ou seja, o canal está num patamar estável, não em aceleração.</p>
+</section>
+
+<div class="divider"></div>
+
+<section id="diario">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Dia a Dia: Views x Publicações</div>
+<div class="section-desc">Barras azuis = dias com publicação. Barras vermelhas = dias sem publicação. Linha amarela = quantidade de vídeos publicados.</div>
+<div class="card"><div class="chart-wrap"><canvas id="chartDaily" height="260"></canvas></div></div>
+
+<div class="compare-row">
+<div class="compare-card blue"><h4>Dias com postagem (18)</h4><div class="compare-val">3.574</div><div class="compare-sub">views/dia em média</div></div>
+<div class="compare-card"><h4>Dias sem postagem (10)</h4><div class="compare-val" style="color:var(--red)">450</div><div class="compare-sub">views/dia em média</div></div>
+</div>
+
+<div class="card tbl-wrap">
+<table class="tbl">
+<tr><th>Semana</th><th class="n">Publicações</th><th class="n">Views</th><th class="n">Views por publicação</th></tr>
+<tr><td>21–27 ago</td><td class="n">22</td><td class="n">23.236</td><td class="n">1.056</td></tr>
+<tr><td>28 ago–3 set</td><td class="n">15</td><td class="n">14.928</td><td class="n">995</td></tr>
+<tr><td>4–10 set</td><td class="n">13</td><td class="n">12.472</td><td class="n">959</td></tr>
+<tr><td>11–17 set</td><td class="n">16</td><td class="n">18.197</td><td class="n">1.137</td></tr>
+</table>
+</div>
+
+<div class="insight">
+<div class="insight-title">O padrão que mais importa</div>
+As views por publicação são praticamente constantes (entre 959 e 1.137 por semana). O total do mês é quase uma conta de <b>número de publicações x 1.000</b>. Os picos (1/set: 7.871; 7/set: 6.184; 11/set: 5.772) são dias de 6 ou 7 publicações, não de vídeo viral. Os vales (31/ago: 160; 9/set: 228; 30/ago: 245) são dias sem postagem. O catálogo antigo não sustenta nada: os 429 vídeos publicados antes do período somaram só <b>2.248 views</b> (3,3% do total).
+</div>
+</section>
+
+<div class="divider"></div>
+
+<section id="formatos">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Shorts x Vídeos Longos</div>
+<div class="section-desc">Dois canais diferentes morando no mesmo endereço.</div>
+
+<div class="compare-row">
+<div class="compare-card blue"><h4>Shorts</h4><div class="compare-val">67,8 mil</div><div class="compare-sub">98,2% das views · 32 publicados (Studio)</div></div>
+<div class="compare-card"><h4>Vídeos</h4><div class="compare-val">1,2 mil</div><div class="compare-sub">1,8% das views · 2 publicados (Studio)</div></div>
+</div>
+
+<div class="card tbl-wrap">
+<table class="tbl">
+<tr><th>Métrica</th><th class="n">Shorts</th><th class="n">Vídeos</th></tr>
+<tr><td>Visualizações</td><td class="n">67,8 mil</td><td class="n">1,2 mil (+116 vs habitual)</td></tr>
+<tr><td>Novos espectadores</td><td class="n">14,4 mil</td><td class="n">79</td></tr>
+<tr><td>Espectadores comuns</td><td class="n">8</td><td class="n">8</td></tr>
+<tr><td>Inscritos ganhos</td><td class="n">+67</td><td class="n">+4</td></tr>
+<tr><td>Faixa normal de views nos primeiros 28 dias</td><td class="n">90 a 1,3 mil</td><td class="n">2 a 9</td></tr>
+<tr><td>Tempo de exibição (CSV)</td><td class="n">191,2 h</td><td class="n">92,9 h</td></tr>
+<tr><td>Impressões de miniatura</td><td class="n">—</td><td class="n">26,7 mil (+80%)</td></tr>
+<tr><td>CTR da miniatura</td><td class="n">—</td><td class="n">1,6%</td></tr>
+<tr><td>Duração média da visualização</td><td class="n">—</td><td class="n">6:19</td></tr>
+</table>
+</div>
+
+<div class="stat-grid three" style="margin-top:12px">
+<div class="stat-card"><div class="stat-val">96%</div><div class="stat-label">Só assiste Shorts</div></div>
+<div class="stat-card"><div class="stat-val">4%</div><div class="stat-label">Assiste os dois</div></div>
+<div class="stat-card"><div class="stat-val">0%</div><div class="stat-label">Só assiste vídeos</div></div>
+</div>
+
+<div class="stat-grid" style="margin-top:12px">
+<div class="stat-card"><div class="stat-val">31,1 mil</div><div class="stat-label">Views intencionais Shorts (+104%)</div></div>
+<div class="stat-card"><div class="stat-val">1,1 mil</div><div class="stat-label">Curtidas Shorts (+149%)</div></div>
+<div class="stat-card"><div class="stat-val">49,6%</div><div class="stat-label">Continuaram assistindo</div></div>
+<div class="stat-card"><div class="stat-val">50,4%</div><div class="stat-label">Pularam o Short</div></div>
+</div>
+
+<p class="read"><b>Leitura:</b> só <b>46%</b> das views de Shorts são intencionais (31,1 mil de 67,8 mil); o resto é gente passando o dedo no feed, e metade pula o vídeo. Os vídeos longos têm só 1,2 mil views, mas somam <b>um terço do tempo de exibição</b> (92,9 h), com 6:19 de duração média. O YouTube aumentou em 80% as impressões de vídeo longo, e o canal desperdiça com CTR de 1,6%.</p>
+</section>
+
+<div class="divider"></div>
+
+<section id="descoberta">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Como as Pessoas Chegam</div>
+
+<div class="card">
+<div class="section-label">Funil de impressões (28 dias)</div>
+<div class="progress-row"><div class="progress-label"><span>Impressões de miniatura</span><span>36.331</span></div><div class="progress-track"><div class="progress-fill" style="width:100%;background:var(--blue)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Conteúdo recomendado pelo YouTube</span><span>8,7%</span></div><div class="progress-track"><div class="progress-fill" style="width:8.7%;background:var(--blue)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Taxa de cliques</span><span>1,8%</span></div><div class="progress-track"><div class="progress-fill" style="width:1.8%;background:var(--yellow)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Views engajadas de impressões</span><span>665</span></div><div class="progress-track"><div class="progress-fill" style="width:1.8%;background:var(--green)"></div></div></div>
+<p class="read">Duração média dessas views: <b>2:02</b> · Tempo de exibição vindo de impressões: <b>22,64 h</b>.</p>
+</div>
+
+<div class="card">
+<div class="section-label">Origem do tráfego — canal inteiro</div>
+<div class="chart-wrap"><canvas id="chartTrafficAll" height="200"></canvas></div>
+<p class="read">Feed dos Shorts 95,4% · Pesquisa 2,2% · Outros recursos 0,8% · Páginas do canal 0,6% · Navegação 0,4% · Outros 0,7%. Olhando só os Shorts: feed 96,8% · pesquisa 1,9% · páginas do canal 0,3% · outros recursos 0,2% · navegação 0,1% · outros 0,7%.</p>
+</div>
+
+<div class="card">
+<div class="section-label">Origem do tráfego — só vídeos longos</div>
+<div class="chart-wrap"><canvas id="chartTrafficLong" height="220"></canvas></div>
+<p class="read">Outros recursos 31,1% · Navegação 19,7% · Páginas do canal 17,4% · Pesquisa 14,1% · Playlists 9,7% · Outros 8,1%.</p>
+</div>
+
+<div class="insight">
+<div class="insight-title">Leitura</div>
+Nos vídeos longos, <b>17,4%</b> vêm das páginas do canal e <b>9,7%</b> de playlists: é o único lugar onde existe gente procurando o Caio de propósito. A pesquisa pesa 14,1% nos longos contra 1,9% nos Shorts: o vídeo longo tem vida útil, o Short vive dois dias no feed e acaba.
+</div>
+</section>
+
+<div class="divider"></div>
+
+<section id="top-videos">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Top Vídeos do Período</div>
+<div class="section-desc">Ordenados por views nos 28 dias. Horas = tempo de exibição. Insc = inscritos gerados.</div>
+
+<div class="video-card" style="border-color:rgba(255,180,0,.3);background:linear-gradient(135deg,rgba(255,180,0,.06),var(--card))">
+<div class="video-rank gold">1</div>
+<div class="video-info">
+<div class="video-title">Primeira Vez no Morumbi: Emoção e Lágrimas de um Tricolor!</div>
+<div class="video-meta"><span class="views">4.123 views</span><span>13,8 h</span><span>2 insc</span><span>CTR 3,13%</span><span class="date">11/09 · 26s</span></div>
+</div>
+</div>
+<div class="video-card">
+<div class="video-rank silver">2</div>
+<div class="video-info">
+<div class="video-title">Grêmio Eliminado: Crise e Frustração do Torcedor</div>
+<div class="video-meta"><span class="views">2.151 views</span><span>4,4 h</span><span>3 insc</span><span>CTR 1,45%</span><span class="date">21/08 · 16s</span></div>
+</div>
+</div>
+<div class="video-card">
+<div class="video-rank bronze">3</div>
+<div class="video-info">
+<div class="video-title">GOLPE DE MESTRE OU ERRO FATAL? Análise das Táticas do Flamengo!</div>
+<div class="video-meta"><span class="views">2.149 views</span><span>4,6 h</span><span>0 insc</span><span>CTR 2,48%</span><span class="date">27/08 · 19s</span></div>
+</div>
+</div>
+
+<div class="card collapsible" onclick="toggleCollapse(this)" style="margin-top:4px"><div class="section-label" style="margin:0">Posições 4 a 20</div></div>
+<div class="collapse-body">
+<div class="card tbl-wrap">
+<table class="tbl">
+<tr><th>#</th><th>Vídeo</th><th class="n">Views</th><th class="n">Horas</th><th class="n">Insc</th></tr>
+<tr><td>4</td><td>Botafogo-FLA: Gol anulado e virada Rubro-Negra! (45s)</td><td class="n">1.982</td><td class="n">7,8</td><td class="n">3</td></tr>
+<tr><td>5</td><td>Arrascaeta e Pedro: A Dupla Imbatível (18s)</td><td class="n">1.917</td><td class="n">4,7</td><td class="n">2</td></tr>
+<tr><td>6</td><td>Flamengo Humilha Botafogo (34s)</td><td class="n">1.812</td><td class="n">6,3</td><td class="n">2</td></tr>
+<tr><td>7</td><td>Flamengo é o ÚNICO Fora da Europa! (42s)</td><td class="n">1.420</td><td class="n">5,8</td><td class="n">3</td></tr>
+<tr><td>8</td><td>SÃO PAULO: Sentimento Que Jamais Acaba! (57s)</td><td class="n">1.341</td><td class="n">3,8</td><td class="n">0</td></tr>
+<tr><td>9</td><td>Santos vs Palmeiras: Noite Épica (27s)</td><td class="n">1.315</td><td class="n">3,0</td><td class="n">1</td></tr>
+<tr><td>10</td><td>Flamengo Vence, Palmeiras Empata (26s)</td><td class="n">1.288</td><td class="n">2,9</td><td class="n">1</td></tr>
+<tr><td>11</td><td>Robôs Brasileiros Falham, China Vence (22s)</td><td class="n">1.257</td><td class="n">3,8</td><td class="n">0</td></tr>
+<tr><td>12</td><td>Flamengo: O Time Imparável de 2024? (42s)</td><td class="n">1.226</td><td class="n">3,9</td><td class="n">2</td></tr>
+<tr><td>13</td><td>Memphis Aceita Redução (35s)</td><td class="n">1.201</td><td class="n">4,2</td><td class="n">0</td></tr>
+<tr><td>14</td><td>Com Memphis, o Timão teria continuado vivo? (11s)</td><td class="n">1.193</td><td class="n">1,2</td><td class="n">1</td></tr>
+<tr><td>15</td><td>Breno Bidon é jogador de seleção? (28s)</td><td class="n">1.174</td><td class="n">1,5</td><td class="n">1</td></tr>
+<tr><td>16</td><td>Pênalti POLÊMICO! Luciano abre o placar (46s)</td><td class="n">1.159</td><td class="n">4,1</td><td class="n">0</td></tr>
+<tr><td>17</td><td>Neymar Agressor? (23s)</td><td class="n">1.146</td><td class="n">2,4</td><td class="n">0</td></tr>
+<tr><td>18</td><td>Torcedor cuspindo em jogador? (56s)</td><td class="n">1.131</td><td class="n">5,3</td><td class="n">2</td></tr>
+<tr><td>19</td><td>Corinthians na Libertadores: Final dos Sonhos? (44s)</td><td class="n">1.130</td><td class="n">3,7</td><td class="n">2</td></tr>
+<tr><td>20</td><td>O que achou do Corinthians contra o Rosario? (47s)</td><td class="n">1.128</td><td class="n">2,9</td><td class="n">1</td></tr>
+</table>
+</div>
+</div>
+
+<div class="card" style="margin-top:12px">
+<div class="section-label">Vídeos longos mais vistos (28 dias)</div>
+<table class="tbl">
+<tr><th>Vídeo</th><th class="n">Views</th></tr>
+<tr><td>PLATA VOLTA AO FLAMENGO, CRUZEIRO DERRETEU E ABEL... (4:37)</td><td class="n">106</td></tr>
+<tr><td>CAIO SORRISO É O MECÂNICO TRAPACEIRO (3:32)</td><td class="n">100</td></tr>
+<tr><td>Palmeiras Passeia Contra o Santos! (3:03)</td><td class="n">24</td></tr>
+<tr><td>Boate Azul - Dimas e Danilo</td><td class="n">18</td></tr>
+<tr><td>A Verdade Chocante: O Contrato de Memphis Depay (2:16)</td><td class="n">18</td></tr>
+</table>
+<p class="read">"Mecânico Trapaceiro" teve o maior número de impressões do canal inteiro (648): um vídeo de humor com o próprio Caio, não de futebol.</p>
+</div>
+
+<div class="insight">
+<div class="insight-title">A fórmula se repetiu</div>
+No relatório anterior, o 1º lugar (Barrichello, 11.490 views) foi emoção, não análise. Agora o 1º lugar de novo é emoção: um torcedor chorando na primeira vez no Morumbi, com <b>quase o dobro</b> do 2º colocado e <b>13,8 h</b> de exibição (o maior tempo do período, 77% acima do 2º). Dois trimestres, mesmo padrão: o que rompe o piso de 1.000 views é história humana, não opinião tática.
+</div>
+</section>
+
+<div class="divider"></div>
+
+<section id="retencao">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Retenção e Retorno</div>
+<div class="section-desc">Quem vê uma vez volta? Dados dos primeiros 7 dias de cada vídeo.</div>
+
+<div class="card tbl-wrap">
+<div class="section-label">Novos espectadores que voltaram ao canal</div>
+<table class="tbl">
+<tr><th>Vídeo</th><th class="n">Novos</th><th class="n">Voltaram</th><th class="n">Views</th></tr>
+<tr><td>Flamengo: O Time Imparável de 2024?</td><td class="n">523</td><td class="n">186 (35,6%)</td><td class="n">1.225</td></tr>
+<tr><td>Com Memphis, o Timão teria continuado vivo?</td><td class="n">264</td><td class="n">102 (38,6%)</td><td class="n">1.193</td></tr>
+<tr><td>Grêmio Eliminado</td><td class="n">1.062</td><td class="n">89 (8,4%)</td><td class="n">2.143</td></tr>
+<tr><td>Flamengo: Pedro Brilha no Maracanã</td><td class="n">359</td><td class="n">86 (24,0%)</td><td class="n">988</td></tr>
+<tr><td>O que achou do Corinthians contra o Rosario?</td><td class="n">269</td><td class="n">82 (30,5%)</td><td class="n">1.128</td></tr>
+<tr><td>Corinthians em Crise! Depay no Bando?</td><td class="n">611</td><td class="n">81 (13,3%)</td><td class="n">1.189</td></tr>
+<tr><td>O goleiro Carlos Miguel no centro da polêmica</td><td class="n">372</td><td class="n">81 (21,8%)</td><td class="n">834</td></tr>
+<tr><td>Hugo: A Esperança Corintiana nos Pênaltis</td><td class="n">528</td><td class="n">77 (14,6%)</td><td class="n">1.295</td></tr>
+<tr><td>Memphis Aceita Redução</td><td class="n">533</td><td class="n">76 (14,3%)</td><td class="n">1.201</td></tr>
+<tr><td>Depay no Corinthians: O Pedido Surpresa</td><td class="n">168</td><td class="n">71 (42,3%)</td><td class="n">686</td></tr>
+<tr><td>Neymar Agressor?</td><td class="n">390</td><td class="n">70 (17,9%)</td><td class="n">1.146</td></tr>
+<tr><td>Torcedor cuspindo em jogador?</td><td class="n">438</td><td class="n">65 (14,8%)</td><td class="n">1.130</td></tr>
+</table>
+</div>
+
+<div class="insight">
+<div class="insight-title">Alcance não é igual a fidelização</div>
+Grêmio Eliminado foi o que mais trouxe gente nova (1.062), mas só <b>8,4%</b> voltou. Já os vídeos de <b>Corinthians/Depay e Flamengo</b> com título em pergunta ("teria continuado vivo?", "o que achou?", "2024?") trazem de volta entre <b>30% e 42%</b>. Torcida com novela em andamento volta para o próximo capítulo; torcida de time eliminado não tem motivo para voltar.
+</div>
+
+<div class="card">
+<div class="section-label">Ainda assistindo aos 0:30 (vídeos longos, últimos 365 dias)</div>
+<div class="progress-row"><div class="progress-label"><span>PLATA VOLTA AO FLAMENGO... (4:37)</span><span>32%</span></div><div class="progress-track"><div class="progress-fill" style="width:32%;background:var(--green)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Fazenda Caetano e Miranda</span><span>6%</span></div><div class="progress-track"><div class="progress-fill" style="width:6%;background:var(--red)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Os Donos da Bola Interior 02/03/2026</span><span>3%</span></div><div class="progress-track"><div class="progress-fill" style="width:3%;background:var(--red)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Os Donos da Bola Interior 22/01/2026</span><span>2%</span></div><div class="progress-track"><div class="progress-fill" style="width:2%;background:var(--red)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Os Donos da Bola Norte Nordeste 31/01/2026</span><span>2%</span></div><div class="progress-track"><div class="progress-fill" style="width:2%;background:var(--red)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Os Donos da Bola Norte Nordeste 10/01/2026</span><span>2%</span></div><div class="progress-track"><div class="progress-fill" style="width:2%;background:var(--red)"></div></div></div>
+<p class="read"><b>Leitura:</b> o vídeo curto de opinião direta segura 32% aos 30s; o programa inteiro de TV segura 2–3%. A curva do PLATA despenca nos primeiros ~20s e depois fica estável em torno de 20% até o fim: quem passa da abertura assiste tudo. O problema é o gancho inicial, não o conteúdo.</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<section id="temas">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Temas e Duração</div>
+<div class="section-desc">Shorts publicados no período (21/ago a 17/set). Média de views por vídeo.</div>
+<div class="card"><div class="chart-wrap"><canvas id="chartThemes" height="280"></canvas></div></div>
+
+<div class="card tbl-wrap">
+<table class="tbl">
+<tr><th>Tema</th><th class="n">Vídeos</th><th class="n">Views</th><th class="n">Média</th><th class="n">Insc</th></tr>
+<tr><td>Flamengo</td><td class="n">15</td><td class="n">18.513</td><td class="n">1.234</td><td class="n">25</td></tr>
+<tr><td>Corinthians</td><td class="n">16</td><td class="n">13.906</td><td class="n">869</td><td class="n">10</td></tr>
+<tr><td>São Paulo</td><td class="n">8</td><td class="n">11.825</td><td class="n">1.478</td><td class="n">9</td></tr>
+<tr><td>Palmeiras</td><td class="n">12</td><td class="n">9.293</td><td class="n">774</td><td class="n">11</td></tr>
+<tr><td>Santos</td><td class="n">8</td><td class="n">7.905</td><td class="n">988</td><td class="n">7</td></tr>
+<tr><td>Seleção/Neymar</td><td class="n">8</td><td class="n">7.265</td><td class="n">908</td><td class="n">5</td></tr>
+<tr><td>Botafogo</td><td class="n">2</td><td class="n">3.794</td><td class="n">1.897</td><td class="n">5</td></tr>
+<tr><td>Grêmio</td><td class="n">2</td><td class="n">2.358</td><td class="n">1.179</td><td class="n">3</td></tr>
+<tr><td>Vasco</td><td class="n">2</td><td class="n">1.320</td><td class="n">660</td><td class="n">3</td></tr>
+</table>
+<p class="read">Um vídeo pode entrar em mais de um tema (ex.: Botafogo-FLA conta nos dois).</p>
+</div>
+
+<div class="insight">
+<div class="insight-title">Virada em relação ao trimestre anterior</div>
+Em mar–jun, Flamengo era o <b>pior</b> tema (449 views/vídeo). Agora é o tema que mais soma views (18,5 mil) e gera <b>35% de todos os inscritos</b> (25 de 72). Corinthians foi para o lado oposto: é o tema mais publicado (16) e tem média abaixo do canal (869). A novela Depay rendeu 5 Shorts no mesmo dia (25/ago), todos entre 935 e 973 views: o volume foi recompensado, mas nenhum rompeu o piso.
+</div>
+
+<div class="card"><div class="section-label">Views médias por duração do Short</div><div class="chart-wrap"><canvas id="chartDur" height="200"></canvas></div>
+<p class="read">Até 20s: <b>1.680</b> (5 vídeos) · 20–30s: 1.116 (22) · 30–45s: 1.020 (20) · 45–60s: 952 (11) · acima de 60s: <b>431</b> (6). Quanto mais curto, mais views. Mas a faixa de 30–45s é a que mais gera inscritos (23).</p></div>
+</section>
+
+<div class="divider"></div>
+
+<section id="publico">
+<div class="platform-badge yt">YouTube</div>
+<div class="section-title">Quem Assiste</div>
+
+<div class="stat-grid">
+<div class="stat-card highlight"><div class="stat-val">90,8%</div><div class="stat-label">Masculino</div></div>
+<div class="stat-card"><div class="stat-val">9,2%</div><div class="stat-label">Feminino</div></div>
+<div class="stat-card"><div class="stat-val">92,6%</div><div class="stat-label">Brasil</div></div>
+<div class="stat-card"><div class="stat-val">39%</div><div class="stat-label">55 anos ou mais</div></div>
+</div>
+
+<div class="card" style="margin-top:12px"><div class="section-label">Idade</div><div class="chart-wrap"><canvas id="chartAge" height="220"></canvas></div></div>
+
+<div class="card">
+<div class="section-label">Comportamento (público mensal em 17/set)</div>
+<div class="progress-row"><div class="progress-label"><span>Novos espectadores</span><span>95,2%</span></div><div class="progress-track"><div class="progress-fill" style="width:95.2%;background:var(--blue)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Espectadores casuais</span><span>4,7%</span></div><div class="progress-track"><div class="progress-fill" style="width:4.7%;background:var(--yellow)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Espectadores recorrentes</span><span>&lt; 0,1%</span></div><div class="progress-track"><div class="progress-fill" style="width:.5%;background:var(--green)"></div></div></div>
+<div class="section-label" style="margin-top:16px">Tempo de exibição</div>
+<div class="progress-row"><div class="progress-label"><span>Não inscritos</span><span>66,6%</span></div><div class="progress-track"><div class="progress-fill" style="width:66.6%;background:var(--blue)"></div></div></div>
+<div class="progress-row"><div class="progress-label"><span>Inscritos</span><span>33,4%</span></div><div class="progress-track"><div class="progress-fill" style="width:33.4%;background:var(--green)"></div></div></div>
+</div>
+
+<div class="card">
+<div class="section-label">Países</div>
+<p class="read">Brasil 92,6% · Portugal 1,3% · Estados Unidos 0,5% · Indonésia 0,4% · Turquia 0,2%.</p>
+<div class="section-label" style="margin-top:12px">Quando o público está no YouTube</div>
+<p class="read">Pico em todos os dias entre <b>18h e 22h</b>, mais forte domingo e segunda por volta das 19h. Madrugada (0h–6h) praticamente vazia; a atividade sobe a partir das 9h.</p>
+</div>
+
+<div class="insight">
+<div class="insight-title">O ativo comercial escondido</div>
+<b>21,5% do público tem 65+</b> e 39% tem 55+, contra só 4,3% entre 18 e 24 anos. É o perfil da TV aberta migrado para o celular: homem, maduro, com renda. Isso não é problema, é argumento de venda para patrocinadores que vendem para esse homem (construção, seguros, saúde). Outro dado subestimado: os inscritos são só 2.139, mas respondem por <b>1/3 do tempo de exibição</b>. A base pequena é muito mais engajada que o público do feed.
+</div>
+</section>
+
+<div class="divider"></div>
+
+<section id="outliers">
+<div class="section-label" style="color:var(--yellow)">Fora da curva</div>
+<div class="section-title">Outliers</div>
+
+<div class="issue-card"><div class="issue-icon green">+</div><div class="issue-text"><h4>Primeira Vez no Morumbi — 4.123 views</h4><p>3,9x a mediana dos Shorts (1.052). Único vídeo claramente viral do período. Emoção de torcedor, não análise.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">+</div><div class="issue-text"><h4>Botafogo-FLA — 461 impressões, CTR 3,25%</h4><p>Maior número de impressões entre os Shorts e 2º maior tempo de exibição (7,8 h). O YouTube levou este para fora do feed.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">+</div><div class="issue-text"><h4>Depay: O Pedido Surpresa — 42,3% de retorno</h4><p>Poucos novos espectadores (168), mas a maior taxa de volta ao canal. Pequeno e fiel.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">+</div><div class="issue-text"><h4>CTRs altos quando aparece a marca</h4><p>"ATUALIZAÇÃO DO FLAMENGO #OsDonosDaBola" 8,57%, "NEYNAR SOLTOU O VERBO" 8,51%, "CAIO SORRISO ALERTA" 8,51%, "COM QUE CARA VOCÊ FICA... #CaioSorriso" 6,98%, "CAIO SORRISO - BOLA NA REDE" 6,22%. Com o nome do Caio ou do programa, o clique na miniatura fica 3 a 4x acima da média de 1,83%.</p></div></div>
+<div class="issue-card"><div class="issue-icon red">-</div><div class="issue-text"><h4>Shorts que morreram: 6 e 10 views</h4><p>"Diniz: O Mestre do Corinthians" (25/ago, 6 views) e "CAIO SORRISO ALERTA: PAULADA" (15/set, 10 views). O feed não chegou a testar. Vale checar se houve problema de upload, música ou reaproveitamento de trecho.</p></div></div>
+<div class="issue-card"><div class="issue-icon red">-</div><div class="issue-text"><h4>Programas completos: impressão sem clique</h4><p>"Os Donos da Bola Interior 02/03" recebeu 421 impressões com CTR 0,48%; o de 22/01 recebeu 378 com 0,26%. O YouTube está mostrando e ninguém clica.</p></div></div>
+<div class="issue-card"><div class="issue-icon red">-</div><div class="issue-text"><h4>Vídeo de 2019 ocupando vitrine</h4><p>"Congresso Internacional Brasil 2019 Parte 1" recebeu 509 impressões (3º maior do canal) e 79 views. Conteúdo fora do tema sendo mostrado no lugar do futebol.</p></div></div>
+<div class="issue-card"><div class="issue-icon red">-</div><div class="issue-text"><h4>Divergência de contagem</h4><p>O card do Studio mostra 32 Shorts + 2 vídeos publicados em 28 dias; o CSV exportado lista 66 conteúdos com data de publicação no período. Conferir antes de usar "número de publicações" em material externo.</p></div></div>
+</section>
+
+<div class="divider"></div>
+
+<section id="padroes">
+<div class="section-label" style="color:var(--blue)">O que está passando despercebido</div>
+<div class="section-title">Padrões Ocultos</div>
+
+<div class="issue-card"><div class="issue-icon green">1</div><div class="issue-text"><h4>O canal tem um piso de 1.000 views, e quase nada passa dele</h4><p>A mediana dos Shorts é 1.052 e 37 dos 58 Shorts do período ficaram entre 900 e 1.300. É o lote de teste do feed. Só 6 passaram de 1.500. O jogo não é só postar mais: é fazer mais Shorts saírem do lote de teste.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">2</div><div class="issue-text"><h4>Parar de postar zera o canal em 24 horas</h4><p>Dias sem postagem: 450 views/dia. Três dias seguidos sem postar (29–31/ago) derrubaram de 2.879 para 160. Não existe inércia: 96,7% das views vieram de vídeos publicados no próprio período.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">3</div><div class="issue-text"><h4>A marca Caio Sorriso converte melhor que o assunto</h4><p>Os maiores CTRs são de títulos com o nome do Caio ou do programa, e o vídeo com mais impressões é o de humor com o próprio Caio. O público reage à pessoa, mas a maioria dos títulos esconde a pessoa atrás de manchetes genéricas.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">4</div><div class="issue-text"><h4>Pergunta traz de volta, afirmação não</h4><p>Os títulos com maior retorno de novos espectadores são perguntas. Os de afirmação/crise trazem alcance e ninguém volta.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">5</div><div class="issue-text"><h4>Sino quase desligado</h4><p>Só 63 inscritos (2,9%) ativaram todas as notificações; a média do YouTube é 5–20%. Quando sair vídeo longo, ele não chega nem a quem já é inscrito.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">6</div><div class="issue-text"><h4>Títulos com erro e datas erradas</h4><p>"NEYNAR", "SIBRE FUTEBOL", "U L T I M A? ção", "Greimista", "Time Imparável de 2024" (publicado em 2026) e dois Shorts com o mesmo título ("Santos Beneficiado?"). Não derruba o feed, mas desgasta a imagem de um apresentador de TV e prejudica a busca.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">7</div><div class="issue-text"><h4>Os picos coincidem com o dia seguinte à rodada</h4><p>1/set (pós Botafogo x Flamengo), 7/set e 11–12/set (Libertadores com São Paulo e Corinthians). O canal performa quando reage rápido ao jogo.</p></div></div>
+</section>
+
+<div class="divider"></div>
+
+<section id="acoes">
+<div class="section-label" style="color:var(--green)">Plano de Ação</div>
+<div class="section-title">O que Fazer com Isso</div>
+
+<div class="issue-card"><div class="issue-icon green">1</div><div class="issue-text"><h4>Postar todo dia, sem buraco</h4><p>Distribuir o mesmo volume ao longo da semana em vez de lotes de 6–7 num dia e zero nos outros. Os 10 dias sem postagem renderam 4.500 views; no ritmo dos dias com postagem, teriam rendido perto de 35 mil.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">2</div><div class="issue-text"><h4>Um Short de emoção por semana</h4><p>Torcedor, bastidor, história humana. É o único tipo de conteúdo que rompeu o piso em dois trimestres seguidos.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">3</div><div class="issue-text"><h4>Colocar o Caio no título e na miniatura</h4><p>"Caio Sorriso", "Os Donos da Bola" e o rosto dele são os elementos com maior CTR. Testar em metade dos Shorts por duas semanas e comparar.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">4</div><div class="issue-text"><h4>Programa completo vira vídeo de 4–6 minutos</h4><p>O PLATA (4:37) segura 32% aos 30s; o programa inteiro segura 2–3%. Corte de opinião com gancho nos primeiros 5 segundos, título e miniatura próprios.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">5</div><div class="issue-text"><h4>Título em pergunta nos temas de novela</h4><p>Perguntas trazem de volta 30–42% dos novos espectadores. É o jeito mais barato de criar audiência recorrente.</p></div></div>
+<div class="issue-card"><div class="issue-icon green">6</div><div class="issue-text"><h4>Revisão de título antes de publicar</h4><p>Checar ortografia, ano e duplicidade. Tirar da vitrine conteúdos fora do tema (ex.: Congresso 2019).</p></div></div>
+<div class="issue-card"><div class="issue-icon green">7</div><div class="issue-text"><h4>Levar o perfil de público para o comercial</h4><p>Homens 90,8%, 39% com 55+, Brasil 92,6%, pico 18h–22h. Vai para o mídia kit como diferencial.</p></div></div>
+</section>
+
+<footer class="footer">
+<p>Fonte: YouTube Studio Analytics (prints e exportação CSV)</p>
+<p>Período principal: 21/08 a 17/09/2026 · Visão ampliada: 20/06 a 17/09/2026</p>
+<p style="color:var(--blue);margin-top:8px">18 de setembro de 2026</p>
+</footer>
+
+</div>
+
+<script>
+Chart.defaults.color='#7A8BA8';
+Chart.defaults.borderColor='rgba(255,255,255,.06)';
+Chart.defaults.font.family="'DM Sans', sans-serif";
+Chart.defaults.font.size=11;
+Chart.defaults.plugins.legend.display=false;
+Chart.defaults.plugins.tooltip.backgroundColor='#0A1628';
+Chart.defaults.plugins.tooltip.borderColor='#12203A';
+Chart.defaults.plugins.tooltip.borderWidth=1;
+Chart.defaults.plugins.tooltip.padding=12;
+Chart.defaults.plugins.tooltip.cornerRadius=8;
+var kfmt=function(v){return v>=1000?(v/1000)+'K':v};
+
+var days=['21/08','22/08','23/08','24/08','25/08','26/08','27/08','28/08','29/08','30/08','31/08','01/09','02/09','03/09','04/09','05/09','06/09','07/09','08/09','09/09','10/09','11/09','12/09','13/09','14/09','15/09','16/09','17/09'];
+var views=[4619,1936,1435,607,4790,4530,5319,2879,578,245,160,7871,536,2659,4317,603,270,6184,343,228,527,5772,5657,1209,1663,3035,458,403];
+var pubs=[3,3,1,0,7,6,2,4,0,0,0,6,1,4,4,1,0,7,0,0,1,6,3,0,1,6,0,0];
+new Chart(document.getElementById('chartDaily'),{
+data:{labels:days,datasets:[
+{type:'line',label:'Publicações',data:pubs,yAxisID:'y1',borderColor:'#FFB400',backgroundColor:'#FFB400',pointRadius:2,tension:.3},
+{type:'bar',label:'Views',data:views,yAxisID:'y',backgroundColor:views.map(function(v,i){return pubs[i]?'rgba(0,153,255,.75)':'rgba(255,77,77,.55)'}),borderRadius:3}
+]},
+options:{responsive:true,plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'circle',font:{size:10}}},tooltip:{mode:'index',intersect:false}},
+scales:{y:{ticks:{callback:kfmt},grid:{color:'rgba(255,255,255,.04)'}},y1:{position:'right',grid:{display:false},ticks:{stepSize:1},min:0},x:{grid:{display:false},ticks:{maxRotation:60,font:{size:9}}}}}
+});
+
+function hbar(id,labels,data,colors,suffix){
+new Chart(document.getElementById(id),{type:'bar',data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
+options:{responsive:true,indexAxis:'y',plugins:{tooltip:{callbacks:{label:function(c){return c.parsed.x.toLocaleString('pt-BR')+suffix}}}},
+scales:{x:{grid:{color:'rgba(255,255,255,.04)'}},y:{grid:{display:false}}}}});
+}
+hbar('chartTrafficAll',['Feed dos Shorts','Pesquisa','Outros recursos','Páginas do canal','Navegação','Outros'],[95.4,2.2,0.8,0.6,0.4,0.7],'#0099FF','%');
+hbar('chartTrafficLong',['Outros recursos','Navegação','Páginas do canal','Pesquisa','Playlists','Outros'],[31.1,19.7,17.4,14.1,9.7,8.1],'#00C896','%');
+hbar('chartThemes',['Botafogo','São Paulo','Flamengo','Grêmio','Santos','Seleção/Neymar','Corinthians','Palmeiras','Vasco'],[1897,1478,1234,1179,988,908,869,774,660],['#FFB400','rgba(0,153,255,.85)','rgba(0,153,255,.8)','rgba(0,153,255,.7)','rgba(0,153,255,.6)','rgba(0,153,255,.5)','rgba(0,153,255,.45)','rgba(0,153,255,.4)','rgba(255,77,77,.6)'],' views/vídeo');
+hbar('chartDur',['até 20s','20–30s','30–45s','45–60s','60s+'],[1680,1116,1020,952,431],['#FFB400','rgba(0,153,255,.8)','rgba(0,153,255,.65)','rgba(0,153,255,.5)','rgba(255,77,77,.6)'],' views/vídeo');
+hbar('chartAge',['13–17','18–24','25–34','35–44','45–54','55–64','65+'],[9.2,4.3,13.5,16.7,17.3,17.5,21.5],['rgba(0,153,255,.4)','rgba(0,153,255,.4)','rgba(0,153,255,.55)','rgba(0,153,255,.65)','rgba(0,153,255,.75)','rgba(0,153,255,.85)','#FFB400'],'%');
+
+function toggleCollapse(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('open')}
+var observer=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:0.08});
+document.querySelectorAll('section').forEach(function(s){observer.observe(s)});
+var navLinks=document.querySelectorAll('.nav a');var sections=[];
+navLinks.forEach(function(a){var el=document.querySelector(a.getAttribute('href'));if(el)sections.push({el:el,link:a})});
+window.addEventListener('scroll',function(){var y=window.scrollY+100;sections.forEach(function(s){if(s.el.offsetTop<=y&&s.el.offsetTop+s.el.offsetHeight>y){navLinks.forEach(function(l){l.classList.remove('active')});s.link.classList.add('active')}})});
+</script>
+</body>
+</html>
