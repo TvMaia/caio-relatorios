@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caio Sorriso no YouTube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: páginas verticais tipo "tela de TV", cada uma com uma ideia e um número grande */
+:root{
+  --bg:#050C18; --panel:#0B1730; --line:#1C2B4A;
+  --fg:#F2F5FA; --muted:#93A3C0;
+  --long:#FFC531;   /* vídeos longos */
+  --short:#FF5A64;  /* shorts */
+  --both:#3FD4E8;   /* quem vê os dois */
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow","Segoe UI",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.45;margin:0}
+.wrap{max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 48px;display:flex;flex-direction:column;gap:20px}
+.page{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:36px 32px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.tag{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1,h2{font-family:var(--display);font-weight:800;text-transform:uppercase;line-height:.98;margin:0;text-wrap:balance}
+h1{font-size:clamp(46px,9vw,84px)}
+h2{font-size:clamp(32px,6vw,52px)}
+p{margin:0;max-width:62ch}
+.lead{font-size:20px;color:var(--fg)}
+.small{font-size:14px;color:var(--muted)}
+.hl-long{color:var(--long)} .hl-short{color:var(--short)} .hl-both{color:var(--both)}
+.num{font-family:var(--display);font-weight:800;line-height:.9;font-variant-numeric:tabular-nums}
+
+/* capa */
+.cover{background:linear-gradient(160deg,#0B1730 0%,#050C18 70%);padding-block:56px}
+.cover .live{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;letter-spacing:.14em;font-size:14px;color:var(--short)}
+.cover .live::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--short)}
+
+/* placar */
+.score{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.score div{border-top:3px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.score .num{font-size:clamp(40px,7vw,60px);white-space:nowrap}
+.score span{font-size:15px;color:var(--muted)}
+
+/* barras de proporção */
+.split{display:flex;flex-direction:column;gap:18px}
+.row{display:flex;flex-direction:column;gap:8px}
+.row .lbl{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--muted)}
+.bar{display:flex;height:44px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar i{display:flex;align-items:center;padding-inline:10px;font-style:normal;font-family:var(--display);font-weight:800;font-size:20px;color:#050C18;white-space:nowrap}
+.bar .s{background:var(--short)} .bar .l{background:var(--long)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:15px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.callout{border-left:4px solid var(--long);padding:6px 0 6px 18px;font-size:22px;font-weight:600;max-width:40ch}
+
+/* atenção */
+.clock{display:flex;flex-direction:column;gap:16px}
+.clock .track{height:30px;background:var(--line);border-radius:6px;position:relative}
+.clock .fill{height:100%;border-radius:6px}
+.clock .meta{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.clock .meta .num{font-size:44px}
+.big15{font-size:clamp(80px,18vw,150px);color:var(--long)}
+
+/* pontos */
+.dots{display:grid;grid-template-columns:repeat(20,1fr);gap:5px;max-width:520px}
+.dots i{aspect-ratio:1;border-radius:50%;background:var(--short);max-width:100%}
+.dots i.l{background:var(--long)} .dots i.b{background:var(--both)}
+
+/* funil */
+.flow{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+.box{border:2px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box.s{border-color:var(--short)} .box.l{border-color:var(--long)}
+.box h3{font-family:var(--display);font-weight:800;font-size:30px;text-transform:uppercase;margin:0}
+.arrow{align-self:center;font-family:var(--display);font-size:44px;color:var(--muted)}
+.pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.pillars div{background:var(--bg);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.pillars strong{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:.02em}
+.pillars span{font-size:15px;color:var(--muted)}
+
+/* cenários */
+.scen{display:flex;flex-direction:column;gap:16px}
+.scen .r{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.scen .r > div:first-child{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;line-height:1.05}
+.scen .r small{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--muted);text-transform:none}
+.scen .b{height:40px;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-inline:12px;font-family:var(--display);font-weight:800;font-size:22px;color:#050C18;min-width:72px}
+.scen .now{background:var(--muted)} .scen .c{background:#B98E22} .scen .base{background:var(--long)} .scen .o{background:repeating-linear-gradient(135deg,var(--long) 0 10px,#E0AC1F 10px 20px)}
+
+/* meta monetização */
+.goal{display:flex;flex-direction:column;gap:10px}
+.goal .track{position:relative;height:36px;background:var(--line);border-radius:6px}
+.goal .seg{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.goal .ticks{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two > div{background:var(--bg);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.two .num{font-size:46px}
+
+/* checklist */
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;font-size:26px;width:44px;height:44px;border-radius:50%;background:var(--long);color:#050C18;display:flex;align-items:center;justify-content:center}
+.steps strong{display:block;font-size:19px}
+.steps span{font-size:15px;color:var(--muted)}
+
+.foot{font-size:13px;color:var(--muted);max-width:none}
+
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:28px 20px}
+  .score{grid-template-columns:repeat(2,1fr)}
+  .flow{grid-template-columns:1fr}
+  .arrow{transform:rotate(90deg);justify-self:center}
+  .pillars,.two{grid-template-columns:1fr}
+  .scen .r{grid-template-columns:1fr;gap:6px}
+  .dots{gap:4px}
+}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:var(--bg);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:none;padding:0;gap:0}
+  .page{border-radius:0;border:0;height:297mm;overflow:hidden;page-break-after:always;break-after:page;justify-content:center;padding:40px 44px}
+  .page > *{zoom:1.28}
+  .score{grid-template-columns:repeat(2,1fr);row-gap:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- 1. Capa -->
+  <section class="page cover">
+    <div class="live">YOUTUBE · ÚLTIMOS 90 DIAS</div>
+    <h1>Caio Sorriso<br>no YouTube</h1>
+    <p class="lead">O que aconteceu no canal nos últimos 3 meses e onde ele pode chegar.</p>
+    <p class="small">Outubro de 2026</p>
+  </section>
+
+  <!-- 2. Placar -->
+  <section class="page">
+    <div class="tag">O placar do trimestre</div>
+    <h2>O canal voltou a jogar</h2>
+    <div class="score">
+      <div><span class="num">200</span><span>vídeos publicados</span></div>
+      <div><span class="num">184 mil</span><span>visualizações</span></div>
+      <div><span class="num">768 h</span><span>de gente assistindo</span></div>
+      <div><span class="num">+156</span><span>novos inscritos</span></div>
+    </div>
+    <p>Quase tudo isso veio dos <span class="hl-short"><b>Shorts</b></span>, os vídeos curtos e verticais. Foram 192 Shorts e só 8 vídeos longos.</p>
+  </section>
+
+  <!-- 3. A descoberta -->
+  <section class="page">
+    <div class="tag">A descoberta</div>
+    <h2>8 vídeos longos fizeram o trabalho de quase 200</h2>
+    <div class="split">
+      <div class="row">
+        <div class="lbl"><span>Vídeos publicados</span><span>200</span></div>
+        <div class="bar"><i class="s" style="width:96%">96%</i><i class="l" style="width:4%"></i></div>
+      </div>
+      <div class="row">
+        <div class="lbl"><span>Horas assistidas</span><span>768 h</span></div>
+        <div class="bar"><i class="s" style="width:68.2%">524 h</i><i class="l" style="width:31.8%">244 h</i></div>
+      </div>
+    </div>
+    <div class="legend"><span><b style="background:var(--short)"></b>Shorts</span><span><b style="background:var(--long)"></b>Vídeos longos</span></div>
+    <p class="callout">Os longos foram só 4% dos vídeos, mas geraram <span class="hl-long">1 de cada 3 horas</span> assistidas no canal.</p>
+  </section>
+
+  <!-- 4. Atenção -->
+  <section class="page">
+    <div class="tag">Tempo de atenção</div>
+    <h2>Quanto tempo cada pessoa fica com você</h2>
+    <div class="clock">
+      <div class="meta"><span class="num hl-short">20 s</span><span>em média num Short</span></div>
+      <div class="track"><div class="fill" style="width:6.5%;background:var(--short)"></div></div>
+      <div class="meta"><span class="num hl-long">5 min 08 s</span><span>em média num vídeo longo</span></div>
+      <div class="track"><div class="fill" style="width:100%;background:var(--long)"></div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <span class="num big15">15x</span>
+      <p class="lead" style="max-width:30ch">mais tempo de atenção por pessoa no vídeo longo. É aí que o público cria vínculo com você.</p>
+    </div>
+  </section>
+
+  <!-- 5. Público -->
+  <section class="page">
+    <div class="tag">Quem assiste</div>
+    <h2>Dois públicos que não se encontram</h2>
+    <div class="dots" id="dots" aria-label="De cada 100 espectadores: 98 só Shorts, 1 só vídeos longos, 1 assiste os dois"></div>
+    <div class="legend">
+      <span><b style="background:var(--short)"></b>98 só veem Shorts</span>
+      <span><b style="background:var(--long)"></b>1 só vê longos</span>
+      <span><b style="background:var(--both)"></b>1 vê os dois</span>
+    </div>
+    <p>De cada 100 pessoas, 98 assistem um Short e vão embora. Elas já conhecem você. Só falta um convite para o vídeo longo.</p>
+  </section>
+
+  <!-- 6. O plano -->
+  <section class="page">
+    <div class="tag">O plano</div>
+    <h2>O Short convida. O vídeo longo segura.</h2>
+    <div class="flow">
+      <div class="box s"><h3 class="hl-short">Short</h3><p>Traz gente nova. Um trecho forte de 30 segundos que termina com "o resto está no vídeo completo".</p></div>
+      <div class="arrow">→</div>
+      <div class="box l"><h3 class="hl-long">Vídeo longo</h3><p>Onde a pessoa fica 5 minutos ou mais, vira fã e volta na semana seguinte.</p></div>
+    </div>
+    <p><b>Vídeos longos gravados só para o YouTube, 2 por semana.</b> Assuntos que só você entrega:</p>
+    <div class="pillars">
+      <div><strong>Pós-rodada</strong><span>Sua leitura da rodada do Brasileirão, no dia seguinte.</span></div>
+      <div><strong>Debate</strong><span>Uma pergunta polêmica por vídeo, no espírito dos programas de debate.</span></div>
+      <div><strong>NFL e NBA</strong><span>Pouca gente fala disso em português. Espaço livre para crescer.</span></div>
+      <div><strong>Bastidores da TV</strong><span>O que acontece antes e depois do "no ar". Ninguém mais tem isso.</span></div>
+    </div>
+  </section>
+
+  <!-- 7. Cenários -->
+  <section class="page">
+    <div class="tag">Onde dá para chegar em 90 dias</div>
+    <h2>De 8 para 24 vídeos longos</h2>
+    <p>Horas assistidas só nos vídeos longos, em um trimestre:</p>
+    <div class="scen">
+      <div class="r"><div>Hoje<small>8 vídeos longos</small></div><div class="b now" style="width:26%">244 h</div></div>
+      <div class="r"><div>Pé no chão<small>novos vídeos rendem um pouco menos</small></div><div class="b c" style="width:54%">510 h</div></div>
+      <div class="r"><div>Esperado<small>novos vídeos rendem igual aos de hoje</small></div><div class="b base" style="width:77%">730 h</div></div>
+      <div class="r"><div>Com capas melhores<small>mais gente clica em cada vídeo</small></div><div class="b o" style="width:100%">950 h</div></div>
+    </div>
+    <p class="small">Cada vídeo longo hoje rende cerca de 30 horas assistidas. As projeções partem desse número. O último cenário é uma meta, não uma garantia.</p>
+  </section>
+
+  <!-- 8. Por que vale dinheiro -->
+  <section class="page">
+    <div class="tag">Por que isso vale dinheiro</div>
+    <h2>Duas portas que o vídeo longo abre</h2>
+    <div class="two">
+      <div>
+        <span class="tag hl-long">1 · Patrocínio</span>
+        <span class="num">5 min</span>
+        <p>Uma marca dentro de um vídeo de 5 minutos é vista de verdade. Num Short de 20 segundos, passa batido. Isso valoriza as ativações de YouTube que você já vende.</p>
+      </div>
+      <div>
+        <span class="tag hl-long">2 · Monetização</span>
+        <span class="num">8.000 h</span>
+        <p>O canal ainda não ganha dinheiro do YouTube. A partir de fevereiro de 2027, um canal novo precisa de 8.000 horas assistidas em vídeos longos em 12 meses.</p>
+      </div>
+    </div>
+    <div class="goal">
+      <p><b>Caminho até as 8.000 horas por ano</b></p>
+      <div class="track">
+        <div class="seg" style="width:36.3%;background:#B98E22;opacity:.55"></div>
+        <div class="seg" style="width:12.5%;background:var(--muted)"></div>
+      </div>
+      <div class="ticks"><span>0</span><span>4.000 h</span><span>8.000 h</span></div>
+      <div class="legend">
+        <span><b style="background:var(--muted)"></b>Ritmo atual: ~1.000 h/ano</span>
+        <span><b style="background:#B98E22"></b>Com 2 longos por semana: ~2.900 h/ano</span>
+      </div>
+    </div>
+    <p>Só com Shorts seria preciso 20 milhões de views em 90 dias. Hoje são 180 mil. <b>O caminho para monetizar passa pelos vídeos longos.</b> É uma meta de 12 a 18 meses, que exige mais vídeos e vídeos que rendam mais.</p>
+  </section>
+
+  <!-- 9. Próximos 90 dias -->
+  <section class="page">
+    <div class="tag">Próximos 90 dias</div>
+    <h2>O que muda a partir de agora</h2>
+    <ol class="steps">
+      <li><div><strong>2 vídeos longos por semana</strong><span>Dias fixos, para o público criar o hábito.</span></div></li>
+      <li><div><strong>Cada longo vira 3 Shorts</strong><span>Os melhores trechos, sempre chamando para o vídeo completo.</span></div></li>
+      <li><div><strong>Capa e título com padrão</strong><span>Hoje só 1,5 de cada 100 pessoas que veem a capa clicam. Dá para melhorar.</span></div></li>
+      <li><div><strong>Conferir os números a cada 30 dias</strong><span>Horas nos longos, cliques na capa e quantas pessoas veem os dois formatos.</span></div></li>
+    </ol>
+    <p class="foot">Fonte: YouTube Studio, últimos 90 dias (out/2026). Desde 27/08/2026 o YouTube conta repetições nas views de Shorts, o que aumenta esse número. Regras de monetização: anúncio do YouTube de agosto/2026, válidas para novos canais a partir de 01/02/2027.</p>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  var d=document.getElementById('dots'); if(!d) return;
+  var h='';
+  for(var i=0;i<100;i++){ h+='<i class="'+(i===98?'l':i===99?'b':'')+'"></i>'; }
+  d.innerHTML=h;
+})();
+</script>
+</body>
+</html>
